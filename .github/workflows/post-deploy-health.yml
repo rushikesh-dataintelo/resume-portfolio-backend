@@ -1,0 +1,38 @@
+name: Post-deploy Health Check
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Run health check against deployment
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
+          DB_HEALTH_SECRET: ${{ secrets.DB_HEALTH_SECRET }}
+        run: |
+          if [ -z "${DEPLOY_URL}" ] || [ -z "${DB_HEALTH_SECRET}" ]; then
+            echo "Missing DEPLOY_URL or DB_HEALTH_SECRET repo secret" >&2
+            exit 1
+          fi
+
+          echo "Checking ${DEPLOY_URL}/health/db"
+
+          # Make request and capture status + body
+          BODY=$(curl -sS "${DEPLOY_URL}/health/db?secret=${DB_HEALTH_SECRET}" || true)
+          STATUS=$(echo "$BODY" | jq -r '.status' 2>/dev/null || echo "")
+
+          echo "Response body: $BODY"
+
+          if [ "$STATUS" != "ok" ]; then
+            echo "Health check failed (status != ok)" >&2
+            exit 1
+          fi
+
+          echo "Health check passed"
