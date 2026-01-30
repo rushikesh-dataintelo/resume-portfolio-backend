@@ -18,7 +18,8 @@ return [
     |
     */
 
-    'driver' => env('SESSION_DRIVER', 'database'),
+    // Use 'file' by default in case DB is unreachable in deploy environments
+    'driver' => env('SESSION_DRIVER', 'file'),
 
     /*
     |--------------------------------------------------------------------------

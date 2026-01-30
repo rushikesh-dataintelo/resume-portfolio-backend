@@ -37,7 +37,25 @@ class CorsMiddleware
             return response('', 204);
         }
 
-        $response = $next($request);
+        try {
+            $response = $next($request);
+        } catch (\Throwable $e) {
+            // Report the exception so it's captured in logs
+            report($e);
+
+            // If origin is allowed, return a JSON 500 response with CORS headers
+            if ($isAllowed) {
+                return response()->json(['message' => 'Internal Server Error'], 500)
+                    ->header('Access-Control-Allow-Origin', $origin)
+                    ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                    ->header('Access-Control-Allow-Credentials', 'true')
+                    ->header('Access-Control-Max-Age', '3600');
+            }
+
+            // If origin not allowed, rethrow so normal handler handles it
+            throw $e;
+        }
 
         if ($isAllowed) {
             $response->headers->set('Access-Control-Allow-Origin', $origin);

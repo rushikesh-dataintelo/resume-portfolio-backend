@@ -15,7 +15,8 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    // Use 'file' by default to avoid DB dependency during deploys where DB may be unreachable
+    'default' => env('CACHE_STORE', 'file'),
 
     /*
     |--------------------------------------------------------------------------
